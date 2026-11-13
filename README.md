@@ -10,7 +10,7 @@ Det innehåller inga hemligheter.
 | `npm audit` / `pnpm audit` (produktion, nivå high) | alla |
 | ESLint, Stylelint, tsc, bygge | alla (kan stängas av per repo) |
 | axe-core (WCAG 2.1 AA, 375 och 1280 px) | statiska sajter |
-| Lighthouse (prestanda >= 0.85, LCP <= 2,5 s, CLS <= 0,1) | statiska sajter |
+| Lighthouse | körs separat via `lighthouse.yml`, inte i CI |
 | Playwright e2e | valfritt (`e2e: true`) |
 | Deploy via rsync | `deploy-static.yml`, vid push till main |
 | Dependabot | `templates/dependabot.yml`, kopieras till varje repo |

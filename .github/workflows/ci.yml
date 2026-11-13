@@ -4,7 +4,7 @@
 #       uses: Techpilots/techpilots-cicd/.github/workflows/ci.yml@main
 #       with: { ... }
 # Kontroller: säkerhetsanalys (audit), ESLint, Stylelint, typkontroll, bygge,
-# och för statiska sajter även tillgänglighet (axe-core) och prestanda (Lighthouse).
+# och för statiska sajter även tillgänglighet (axe-core). Lighthouse körs separat (lighthouse.yml).
 # Valfritt: Playwright e2e mot en byggd server.
 name: Gemensam CI
 
@@ -25,8 +25,7 @@ on:
       typecheck: { type: boolean, default: true }
       build: { type: boolean, default: true }
       env-vars: { type: string, default: "", description: "KEY=VALUE, en per rad, för bygget" }
-      static-site: { type: boolean, default: false, description: "Kör axe och Lighthouse mot out/" }
-      lighthouse-paths: { type: string, default: "/", description: "Sökvägar, mellanslagsseparerade" }
+      static-site: { type: boolean, default: false, description: "Kör axe mot out/" }
       e2e: { type: boolean, default: false }
       e2e-command: { type: string, default: "playwright test" }
       e2e-start: { type: string, default: "next start -p 3001", description: "Startar servern för e2e" }
@@ -104,7 +103,7 @@ jobs:
         run: |
           if [ "${{ inputs.package-manager }}" = "pnpm" ]; then pnpm run build; else npm run build; fi
 
-      # ---- Tillgänglighet och prestanda (statiska sajter) ----
+      # ---- Tillgänglighet (statiska sajter) ----
       - name: Hämta delade CI-skript
         if: inputs.static-site
         uses: actions/checkout@v4
@@ -127,19 +126,6 @@ jobs:
         if: inputs.static-site
         working-directory: ci-scripts
         run: node scripts/a11y.mjs "$GITHUB_WORKSPACE/${{ inputs.working-directory }}/out" http://localhost:4173
-      - name: Prestanda (Lighthouse)
-        if: inputs.static-site
-        run: |
-          args=""
-          for p in ${{ inputs.lighthouse-paths }}; do args="$args --collect.url=http://localhost:4173$p"; done
-          npx --yes @lhci/cli@0.15 autorun --config="$GITHUB_WORKSPACE/ci-scripts/lighthouserc.json" $args
-      - name: Ladda upp Lighthouse-rapport
-        if: always() && inputs.static-site
-        uses: actions/upload-artifact@v4
-        with:
-          name: lighthouse
-          path: ${{ inputs.working-directory }}/.lighthouseci
-          if-no-files-found: ignore
 
       # ---- Playwright e2e ----
       - name: Installera Playwright-webbläsare
