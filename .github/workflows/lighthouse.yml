@@ -1,0 +1,40 @@
+# Lighthouse körs separat, bara vid behov (tar för lång tid för CI).
+# Anrop från en sajt:
+#   jobs:
+#     lh:
+#       uses: Techpilots/techpilots-cicd/.github/workflows/lighthouse.yml@v1
+#       with: { url: "https://pistolero.se" }
+name: Lighthouse
+
+on:
+  workflow_call:
+    inputs:
+      url: { type: string, required: true, description: "Adress att testa, t.ex. den publicerade sidan" }
+      paths: { type: string, default: "/", description: "Sökvägar, mellanslagsseparerade" }
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Techpilots/techpilots-cicd
+          ref: ${{ github.job_workflow_sha || 'main' }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Kör Lighthouse
+        run: |
+          args=""
+          for p in ${{ inputs.paths }}; do args="$args --collect.url=${{ inputs.url }}$p"; done
+          npx --yes @lhci/cli@0.15 autorun --config=lighthouserc.json $args
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse
+          path: .lighthouseci
+          if-no-files-found: ignore
